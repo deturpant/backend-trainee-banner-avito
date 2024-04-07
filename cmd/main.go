@@ -20,11 +20,10 @@ func main() {
 	cfg := config.MustLoadConfig()
 	fmt.Println(cfg.Env)
 	log := setupLogger(cfg.Env)
-	log.Info("Application started....", slog.String("env", cfg.Env))
 	log.Debug("Debug messages are active")
 
 	//CONNECT TO DB
-	pg, err := connectToPostgres(cfg)
+	pg, err := connectToPostgres(cfg, log)
 	if err != nil {
 		log.Error("Error creating PostgreSQL instance", errMsg.Err(err))
 		os.Exit(1)
@@ -37,6 +36,7 @@ func main() {
 	} else {
 		log.Info("Connected to PostgreSQL successfully!")
 	}
+	log.Info("Application started....", slog.String("env", cfg.Env))
 
 	// TODO : STORAGE : postgresql
 	// TODO : ROUTER  : chi, chi-render
@@ -60,9 +60,9 @@ func setupLogger(env string) *slog.Logger {
 	return log
 }
 
-func connectToPostgres(cfg *config.Config) (*postgres.Postgres, error) {
+func connectToPostgres(cfg *config.Config, log *slog.Logger) (*postgres.Postgres, error) {
 	connString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s",
 		cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password, cfg.Database.DBName)
-	pg, err := postgres.NewPG(context.Background(), connString)
+	pg, err := postgres.NewPG(context.Background(), connString, log)
 	return pg, err
 }
