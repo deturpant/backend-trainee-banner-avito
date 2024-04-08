@@ -14,7 +14,7 @@ type UserRepository struct {
 	log *slog.Logger
 }
 
-func NewRepository(db *pgxpool.Pool, log *slog.Logger) *UserRepository {
+func NewUserRepository(db *pgxpool.Pool, log *slog.Logger) *UserRepository {
 	return &UserRepository{db, log}
 }
 
