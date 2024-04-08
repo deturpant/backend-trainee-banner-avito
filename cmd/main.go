@@ -2,11 +2,16 @@ package main
 
 import (
 	"backend-trainee-banner-avito/internal/config"
+	"backend-trainee-banner-avito/internal/http-server/handlers/features"
 	"backend-trainee-banner-avito/internal/lib/logger/errMsg"
+	"backend-trainee-banner-avito/internal/repositories"
 	"backend-trainee-banner-avito/internal/storage/postgres"
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
+	"net/http"
 	"os"
 )
 
@@ -44,7 +49,28 @@ func main() {
 		log.Error("error adding user", errMsg.Err(errorr))
 	}*/
 
-	// TODO : ROUTER  : chi, chi-render
+	//router init
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(middleware.RealIP)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
+	fr := repositories.NewFeatureRepository(pg.Db, log)
+	router.Post("/features", features.New(log, fr))
+
+	log.Info("Starting server")
+	server := &http.Server{
+		Addr:         "localhost:8000",
+		Handler:      router,
+		ReadTimeout:  cfg.Server.Timeout,
+		WriteTimeout: cfg.Server.Timeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
+	}
+	if err := server.ListenAndServe(); err != nil {
+		log.Error("Failed to start server")
+	}
+
 	// TODO : SERVER
 
 }
