@@ -34,18 +34,18 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user *entities.User) e
 func (ur *UserRepository) FindUserByUsername(ctx context.Context, username string) (entities.User, error) {
 	query, err := ur.db.Query(ctx, `SELECT * FROM users WHERE username = $1`, username)
 	if err != nil {
-		ur.log.Error("User not found", errMsg.Err(err))
+		ur.log.Error("Error querying users", errMsg.Err(err))
 		return entities.User{}, err
 	}
 	row := entities.User{}
-
+	defer query.Close()
 	if !query.Next() {
 		ur.log.Error("User not found")
 		return entities.User{}, fmt.Errorf("User not found")
 	} else {
 		err := query.Scan(&row.ID, &row.Username, &row.Password, &row.Role)
 		if err != nil {
-			ur.log.Error("User not found", errMsg.Err(err))
+			ur.log.Error("Error scanning users", errMsg.Err(err))
 			return entities.User{}, err
 		}
 	}
@@ -55,14 +55,19 @@ func (ur *UserRepository) FindUserById(ctx context.Context, id int) (entities.Us
 	query, err := ur.db.Query(ctx,
 		`SELECT * FROM users WHERE id = $1`, id)
 	if err != nil {
-		ur.log.Error("User not found", errMsg.Err(err))
+		ur.log.Error("Error querying users", errMsg.Err(err))
 		return entities.User{}, err
 	}
+	defer query.Close()
 	rowArray := entities.User{}
-	for query.Next() {
+	if !query.Next() {
+		ur.log.Error("User not found")
+		return entities.User{}, fmt.Errorf("User not found")
+
+	} else {
 		err := query.Scan(&rowArray.ID, &rowArray.Username, &rowArray.Password, &rowArray.Role)
 		if err != nil {
-			ur.log.Error("User not found", errMsg.Err(err))
+			ur.log.Error("Error scanning users", errMsg.Err(err))
 			return entities.User{}, err
 		}
 	}
