@@ -3,6 +3,7 @@ package main
 import (
 	"backend-trainee-banner-avito/internal/config"
 	"backend-trainee-banner-avito/internal/lib/logger/errMsg"
+	"backend-trainee-banner-avito/internal/repositories"
 	"backend-trainee-banner-avito/internal/storage/postgres"
 	"context"
 	"fmt"
@@ -37,6 +38,15 @@ func main() {
 		log.Info("Connected to PostgreSQL successfully!")
 	}
 	log.Info("Application started....", slog.String("env", cfg.Env))
+
+	/*ur := repositories.NewRepository(pg.Db, log)
+	errorr := ur.CreateUser(context.Background(), &entities.User{Role: "user", Password: "123123", Username: "pop"})
+	if err != nil {
+		log.Error("error adding user", errMsg.Err(errorr))
+	}*/
+	ur := repositories.NewRepository(pg.Db, log)
+	ent, err := ur.FindUserByUsername(context.Background(), "podsdp")
+	fmt.Println(ent)
 
 	// TODO : STORAGE : postgresql
 	// TODO : ROUTER  : chi, chi-render

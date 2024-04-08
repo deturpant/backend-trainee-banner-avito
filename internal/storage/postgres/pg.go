@@ -9,7 +9,7 @@ import (
 )
 
 type Postgres struct {
-	db  *pgxpool.Pool
+	Db  *pgxpool.Pool
 	log *slog.Logger
 }
 
@@ -38,6 +38,7 @@ func NewPG(ctx context.Context, connString string, log *slog.Logger) (*Postgres,
 	}
 	return pgInstance, nil
 }
+
 func CreateTables(ctx context.Context, db *pgxpool.Pool, log *slog.Logger) error {
 	_, err := db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS banners (
@@ -88,7 +89,8 @@ func CreateTables(ctx context.Context, db *pgxpool.Pool, log *slog.Logger) error
 
 	_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS users (
-			username TEXT PRIMARY KEY,
+		    id SERIAL PRIMARY KEY ,
+			username TEXT,
 			password TEXT,
 			role TEXT
 		)
@@ -97,14 +99,14 @@ func CreateTables(ctx context.Context, db *pgxpool.Pool, log *slog.Logger) error
 		return fmt.Errorf("failed to create users table: %w", err)
 	}
 
-	log.Info("Tables created")
+	log.Info("Tables created (or updated)")
 	return nil
 }
 
 func (pg *Postgres) Ping(ctx context.Context) error {
-	return pg.db.Ping(ctx)
+	return pg.Db.Ping(ctx)
 }
 
 func (pg *Postgres) Close() {
-	pg.db.Close()
+	pg.Db.Close()
 }
