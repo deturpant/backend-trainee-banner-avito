@@ -1,35 +1,26 @@
 package users
 
 import (
-	"backend-trainee-banner-avito/internal/entities"
 	"backend-trainee-banner-avito/internal/lib/api/response"
 	"backend-trainee-banner-avito/internal/lib/auth"
 	"backend-trainee-banner-avito/internal/lib/logger/errMsg"
-	"context"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
-type User interface {
-	CreateUser(ctx context.Context, user *entities.User) error
-	FindUserByUsername(ctx context.Context, username string) (entities.User, error)
-}
-
-type RequestUser struct {
-	Username string `json:"name" validate:"required"`
-	Password string `json:"password" validate:"required"`
-}
-type ResponseUser struct {
+type ResponseAuthUser struct {
 	response.Response
-	ID   int    `json:"user_id"`
-	Name string `json:"name"`
-	Role string `json:"role"`
+	ID    int    `json:"user_id"`
+	Name  string `json:"name"`
+	Role  string `json:"role"`
+	Token string `json:"token"`
 }
 
-func New(log *slog.Logger, userRepository User) http.HandlerFunc {
+func LoginFunc(log *slog.Logger, userRepository User, jwt *auth.JWTManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const loggerOptions = "handlers.features.createUser.New"
 		log = log.With(
@@ -50,19 +41,26 @@ func New(log *slog.Logger, userRepository User) http.HandlerFunc {
 			render.JSON(w, r, response.ValidationError(validateErr))
 			return
 		}
-		hashPass, err := auth.HashPassword(req.Password)
-		user := entities.User{Username: req.Username, Password: hashPass, Role: "user"}
-		err = userRepository.CreateUser(r.Context(), &user)
+		user, err := userRepository.FindUserByUsername(r.Context(), req.Username)
 		if err != nil {
-			log.Error("Failed to create user", errMsg.Err(err))
-			render.JSON(w, r, response.Error("Failed to create user"))
+			log.Error("User not found with login")
+			render.JSON(w, r, response.Error("Invalid username"))
+
 			return
 		}
-		log.Info("User added")
-		responseOK(w, r, req.Username, user.ID, user.Role)
+
+		errAuth := auth.ComparePasswordHash(req.Password, user.Password)
+		if errAuth != nil {
+			log.Error("Invalid password")
+			render.JSON(w, r, response.Error("Invalid password"))
+			return
+		}
+		token, err := jwt.GenerateToken(user.Username, user.Role, time.Second*600)
+		log.Info("User authenticated")
+		responseAuthOK(w, r, req.Username, user.ID, user.Role, token)
 	}
 }
-func responseOK(w http.ResponseWriter, r *http.Request, name string, userID int, role string) {
-	render.JSON(w, r, ResponseUser{Response: response.OK(),
-		Name: name, ID: userID, Role: role})
+func responseAuthOK(w http.ResponseWriter, r *http.Request, name string, userID int, role string, token string) {
+	render.JSON(w, r, ResponseAuthUser{Response: response.OK(),
+		Name: name, ID: userID, Role: role, Token: token})
 }
