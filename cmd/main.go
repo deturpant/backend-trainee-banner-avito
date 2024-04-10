@@ -4,6 +4,7 @@ import (
 	"backend-trainee-banner-avito/internal/config"
 	"backend-trainee-banner-avito/internal/http-server/handlers/features"
 	"backend-trainee-banner-avito/internal/http-server/handlers/tags"
+	"backend-trainee-banner-avito/internal/http-server/handlers/users"
 	"backend-trainee-banner-avito/internal/lib/logger/errMsg"
 	"backend-trainee-banner-avito/internal/repositories"
 	"backend-trainee-banner-avito/internal/storage/postgres"
@@ -60,7 +61,9 @@ func main() {
 	fr := repositories.NewFeatureRepository(pg.Db, log)
 	router.Post("/features", features.New(log, fr))
 	tr := repositories.NewTagRepository(pg.Db, log)
+	ur := repositories.NewUserRepository(pg.Db, log)
 	router.Post("/tags", tags.New(log, tr))
+	router.Post("/users", users.New(log, ur))
 
 	log.Info("Starting server at", slog.String("addr", cfg.Server.Addr))
 	server := &http.Server{

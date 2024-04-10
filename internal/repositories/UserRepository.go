@@ -19,12 +19,10 @@ func NewUserRepository(db *pgxpool.Pool, log *slog.Logger) *UserRepository {
 }
 
 func (ur *UserRepository) CreateUser(ctx context.Context, user *entities.User) error {
-	_, err := ur.db.Exec(ctx,
-		`
-		INSERT INTO users (username, password, role)
-		VALUES ($1, $2, $3)
-		RETURNING id
-		`, user.Username, user.Password, user.Role)
+	err := ur.db.QueryRow(ctx,
+		`INSERT INTO users (username, password, role)
+		VALUES ($1,$2,$3)
+		RETURNING id`, user.Username, user.Password, user.Role).Scan(&user.ID)
 	if err != nil {
 		ur.log.Error("Failed to create user", errMsg.Err(err))
 		return err

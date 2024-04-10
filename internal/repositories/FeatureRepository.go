@@ -24,7 +24,7 @@ func (fr *FeatureRepository) CreateFeature(ctx context.Context, feature *entitie
 		VALUES ($1)
 		RETURNING id`, feature.Name).Scan(&feature.ID)
 	if err != nil {
-		fr.log.Error("Failed to create tag", errMsg.Err(err))
+		fr.log.Error("Failed to create feature", errMsg.Err(err))
 		return err
 	}
 	return nil

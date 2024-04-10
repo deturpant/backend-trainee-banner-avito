@@ -90,7 +90,7 @@ func CreateTables(ctx context.Context, db *pgxpool.Pool, log *slog.Logger) error
 	_, err = db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS users (
 		    id SERIAL PRIMARY KEY ,
-			username TEXT,
+			username TEXT UNIQUE,
 			password TEXT,
 			role TEXT
 		)
