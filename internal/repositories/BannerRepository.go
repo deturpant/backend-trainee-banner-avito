@@ -17,7 +17,7 @@ func NewBannerRepository(db *pgxpool.Pool, log *slog.Logger) *BannerRepository {
 	return &BannerRepository{db, log}
 }
 
-func (br *BannerRepository) createBanner(ctx context.Context, banner *entities.Banner) error {
+func (br *BannerRepository) CreateBanner(ctx context.Context, banner *entities.Banner) error {
 	_, err := br.db.Exec(ctx,
 		`INSERT INTO banners (feature_id, content, is_active, created_at, updated_at) VALUES ($1,$2,$3,$4,$5)`,
 		banner.FeatureID, banner.Content, banner.IsActive, banner.CreatedAt, banner.UpdatedAt)
@@ -47,7 +47,7 @@ func (br *BannerRepository) FindBannerById(ctx context.Context, id int) (entitie
 	return rowArray, nil
 }
 
-func (br *BannerRepository) findBannersByFeatureID(ctx context.Context, feature_id int) ([]entities.Banner, error) {
+func (br *BannerRepository) FindBannersByFeatureID(ctx context.Context, feature_id int) ([]entities.Banner, error) {
 	query, err := br.db.Query(ctx, `SELECT * FROM banners WHERE feature_id = $1`, feature_id)
 	if err != nil {
 		br.log.Error("Error querying banners", errMsg.Err(err))

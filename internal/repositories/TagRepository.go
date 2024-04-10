@@ -18,7 +18,7 @@ func NewTagRepository(db *pgxpool.Pool, log *slog.Logger) *TagRepository {
 	return &TagRepository{db, log}
 }
 
-func (tr *TagRepository) createTag(ctx context.Context, tag *entities.Tag) error {
+func (tr *TagRepository) CreateTag(ctx context.Context, tag *entities.Tag) error {
 	_, err := tr.db.Exec(ctx,
 		`INSERT INTO tags (name)
 		VALUES ($1)`, tag.Name)
@@ -28,7 +28,17 @@ func (tr *TagRepository) createTag(ctx context.Context, tag *entities.Tag) error
 	}
 	return nil
 }
-func (tr *TagRepository) findTagByName(ctx context.Context, name string) (entities.Tag, error) {
+func (tr *TagRepository) FindTagById(ctx context.Context, id int) (entities.Tag, error) {
+	var tag entities.Tag
+	err := tr.db.QueryRow(ctx, `SELECT id, name FROM tags WHERE id = $1`, id).Scan(&tag.ID, &tag.Name)
+	if err != nil {
+		tr.log.Error("Failed to find Tag by ID", errMsg.Err(err))
+		return entities.Tag{}, err
+	}
+	return tag, nil
+}
+
+func (tr *TagRepository) FindTagByName(ctx context.Context, name string) (entities.Tag, error) {
 	query, err := tr.db.Query(ctx,
 		`SELECT * FROM tags WHERE name = $1`, name)
 	if err != nil {

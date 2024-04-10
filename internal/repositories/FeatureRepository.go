@@ -28,7 +28,17 @@ func (fr *FeatureRepository) CreateFeature(ctx context.Context, feature *entitie
 	}
 	return nil
 }
-func (fr *FeatureRepository) findFeatureByName(ctx context.Context, name string) (entities.Feature, error) {
+func (fr *FeatureRepository) FindFeatureById(ctx context.Context, id int) (entities.Feature, error) {
+	var row entities.Feature
+	err := fr.db.QueryRow(ctx, `SELECT id, name FROM features WHERE id = $1`, id).Scan(&row.ID, &row.Name)
+	if err != nil {
+		fr.log.Error("Failed to find Feature by ID", errMsg.Err(err))
+		return entities.Feature{}, err
+	}
+	return row, nil
+}
+
+func (fr *FeatureRepository) FindFeatureByName(ctx context.Context, name string) (entities.Feature, error) {
 	query, err := fr.db.Query(ctx, `SELECT * FROM features WHERE name = $1`, name)
 	if err != nil {
 		fr.log.Error("Feature not found", errMsg.Err(err))

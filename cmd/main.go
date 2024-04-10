@@ -59,9 +59,9 @@ func main() {
 	fr := repositories.NewFeatureRepository(pg.Db, log)
 	router.Post("/features", features.New(log, fr))
 
-	log.Info("Starting server")
+	log.Info("Starting server at", slog.String("addr", cfg.Server.Addr))
 	server := &http.Server{
-		Addr:         "localhost:8000",
+		Addr:         cfg.Server.Addr,
 		Handler:      router,
 		ReadTimeout:  cfg.Server.Timeout,
 		WriteTimeout: cfg.Server.Timeout,
