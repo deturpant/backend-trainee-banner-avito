@@ -1,4 +1,4 @@
-package features
+package tags
 
 import (
 	"backend-trainee-banner-avito/internal/entities"
@@ -12,26 +12,27 @@ import (
 	"net/http"
 )
 
-type Features interface {
-	CreateFeature(ctx context.Context, feature *entities.Feature) error
-}
-type RequestFeature struct {
+type RequestTag struct {
 	Name string `json:"name" validate:"required"`
 }
-type ResponseFeature struct {
+type ResponseTag struct {
 	response.Response
-	ID   int    `json:"feature_id"`
+	ID   int    `json:"tag_id"`
 	Name string `json:"name"`
 }
 
-func New(log *slog.Logger, featureRepository Features) http.HandlerFunc {
+type Tag interface {
+	CreateTag(ctx context.Context, tag *entities.Tag) error
+}
+
+func New(log *slog.Logger, tagRepository Tag) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const loggerOptions = "handlers.features.createFeature.New"
+		const loggerOptions = "handlers.features.createTag.New"
 		log = log.With(
 			slog.String("options", loggerOptions),
 			slog.String("request_id", middleware.GetReqID(r.Context())))
 
-		var req RequestFeature
+		var req RequestTag
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
 			log.Error("Failed to decode request body", errMsg.Err(err))
@@ -45,18 +46,18 @@ func New(log *slog.Logger, featureRepository Features) http.HandlerFunc {
 			render.JSON(w, r, response.ValidationError(validateErr))
 			return
 		}
-		feature := entities.Feature{Name: req.Name}
-		err = featureRepository.CreateFeature(r.Context(), &feature)
+		tag := entities.Tag{Name: req.Name}
+		err = tagRepository.CreateTag(r.Context(), &tag)
 		if err != nil {
-			log.Error("Failed to create feature", errMsg.Err(err))
-			render.JSON(w, r, response.Error("Failed to create feature"))
+			log.Error("Failed to create tag", errMsg.Err(err))
+			render.JSON(w, r, response.Error("Failed to create tag"))
 			return
 		}
-		log.Info("Feature added")
-		responseOK(w, r, req.Name, feature.ID)
+		log.Info("Tag added")
+		responseOK(w, r, req.Name, tag.ID)
 	}
 }
-func responseOK(w http.ResponseWriter, r *http.Request, name string, feature_id int) {
-	render.JSON(w, r, ResponseFeature{Response: response.OK(),
-		Name: name, ID: feature_id})
+func responseOK(w http.ResponseWriter, r *http.Request, name string, tag_id int) {
+	render.JSON(w, r, ResponseTag{Response: response.OK(),
+		Name: name, ID: tag_id})
 }

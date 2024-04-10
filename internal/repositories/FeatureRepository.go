@@ -19,12 +19,13 @@ func NewFeatureRepository(db *pgxpool.Pool, log *slog.Logger) *FeatureRepository
 }
 
 func (fr *FeatureRepository) CreateFeature(ctx context.Context, feature *entities.Feature) error {
-	_, err := fr.db.Exec(ctx,
+	err := fr.db.QueryRow(ctx,
 		`INSERT INTO features (name)
-			VALUES ($1)
-						`, feature.Name)
+		VALUES ($1)
+		RETURNING id`, feature.Name).Scan(&feature.ID)
 	if err != nil {
-		fr.log.Error("Failed to create Feature", errMsg.Err(err))
+		fr.log.Error("Failed to create tag", errMsg.Err(err))
+		return err
 	}
 	return nil
 }
