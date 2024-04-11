@@ -9,3 +9,5 @@ database:
   user: postgres
   password: postgres
   dbname: banner
+jwt:
+  secret: FJKngdjkfgndfkgc534tlLKFJKLmfkdfjnk

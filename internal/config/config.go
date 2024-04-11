@@ -11,6 +11,7 @@ type Config struct {
 	Env      string         `yaml:"env"`
 	Server   ServerConfig   `yaml:"http_server"`
 	Database DatabaseConfig `yaml:"database"`
+	Jwt      JwtConfig      `yaml:"jwt"`
 }
 
 type ServerConfig struct {
@@ -18,7 +19,9 @@ type ServerConfig struct {
 	Timeout     time.Duration `yaml:"timeout"`
 	IdleTimeout time.Duration `yaml:"idle_timeout"`
 }
-
+type JwtConfig struct {
+	Secret string `yaml:"secret"`
+}
 type DatabaseConfig struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`

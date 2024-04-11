@@ -2,6 +2,7 @@ package main
 
 import (
 	"backend-trainee-banner-avito/internal/config"
+	"backend-trainee-banner-avito/internal/http-server/handlers/banners"
 	"backend-trainee-banner-avito/internal/http-server/handlers/features"
 	"backend-trainee-banner-avito/internal/http-server/handlers/tags"
 	"backend-trainee-banner-avito/internal/http-server/handlers/users"
@@ -67,13 +68,18 @@ func main() {
 	router.Post("/tags", tags.New(log, tr))
 
 	router.Post("/users", users.New(log, ur))
-	jwt := auth.NewJWTManager("sdmgslgnjfkd", log)
+	jwt := auth.NewJWTManager(cfg.Jwt.Secret, log)
 	router.Post("/login", users.LoginFunc(log, ur, jwt))
 
 	//secured route
 	router.With(func(next http.Handler) http.Handler {
 		return middlewares.TokenAuthMiddleware(jwt, next)
 	}).Post("/tags", tags.New(log, tr))
+	br := repositories.NewBannerRepository(pg.Db, log)
+	btr := repositories.NewBannerTagRepository(pg.Db, log)
+	router.With(func(next http.Handler) http.Handler {
+		return middlewares.TokenAuthAndRoleMiddleware(jwt, next)
+	}).Post("/banners", banners.New(log, br, btr))
 	log.Info("Starting server at", slog.String("addr", cfg.Server.Addr))
 	server := &http.Server{
 		Addr:         cfg.Server.Addr,

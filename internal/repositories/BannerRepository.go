@@ -18,9 +18,9 @@ func NewBannerRepository(db *pgxpool.Pool, log *slog.Logger) *BannerRepository {
 }
 
 func (br *BannerRepository) CreateBanner(ctx context.Context, banner *entities.Banner) error {
-	_, err := br.db.Exec(ctx,
-		`INSERT INTO banners (feature_id, content, is_active, created_at, updated_at) VALUES ($1,$2,$3,$4,$5)`,
-		banner.FeatureID, banner.Content, banner.IsActive, banner.CreatedAt, banner.UpdatedAt)
+	err := br.db.QueryRow(ctx,
+		`INSERT INTO banners (feature_id, content, is_active, created_at, updated_at) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+		banner.FeatureID, banner.Content, banner.IsActive, banner.CreatedAt, banner.UpdatedAt).Scan(&banner.ID)
 	if err != nil {
 		br.log.Error("Failed to create banner", errMsg.Err(err))
 		return err
