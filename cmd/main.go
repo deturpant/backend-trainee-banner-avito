@@ -5,6 +5,7 @@ import (
 	"backend-trainee-banner-avito/internal/http-server/handlers/features"
 	"backend-trainee-banner-avito/internal/http-server/handlers/tags"
 	"backend-trainee-banner-avito/internal/http-server/handlers/users"
+	"backend-trainee-banner-avito/internal/lib/api/middlewares"
 	"backend-trainee-banner-avito/internal/lib/auth"
 	"backend-trainee-banner-avito/internal/lib/logger/errMsg"
 	"backend-trainee-banner-avito/internal/repositories"
@@ -64,10 +65,15 @@ func main() {
 	tr := repositories.NewTagRepository(pg.Db, log)
 	ur := repositories.NewUserRepository(pg.Db, log)
 	router.Post("/tags", tags.New(log, tr))
+
 	router.Post("/users", users.New(log, ur))
 	jwt := auth.NewJWTManager("sdmgslgnjfkd", log)
 	router.Post("/login", users.LoginFunc(log, ur, jwt))
 
+	//secured route
+	router.With(func(next http.Handler) http.Handler {
+		return middlewares.TokenAuthMiddleware(jwt, next)
+	}).Post("/tags", tags.New(log, tr))
 	log.Info("Starting server at", slog.String("addr", cfg.Server.Addr))
 	server := &http.Server{
 		Addr:         cfg.Server.Addr,
