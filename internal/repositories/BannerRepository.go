@@ -4,6 +4,8 @@ import (
 	"backend-trainee-banner-avito/internal/entities"
 	"backend-trainee-banner-avito/internal/lib/logger/errMsg"
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 )
@@ -96,4 +98,23 @@ func (br *BannerRepository) findBannersByTagID(ctx context.Context, tagId int) (
 		return []entities.Banner{}, nil
 	}
 	return resultSlice, nil
+}
+
+func (br *BannerRepository) FindBannerByFeatureTag(ctx context.Context, featureID, tagID int) (*entities.Banner, error) {
+	query := `SELECT b.id, b.feature_id, b.content, b.is_active, b.created_at, b.updated_at
+			  FROM banners b
+			  INNER JOIN banner_tags bt ON b.id = bt.banner_id
+			  WHERE b.feature_id = $1 AND bt.tag_id = $2`
+	row := br.db.QueryRow(ctx, query, featureID, tagID)
+	var banner entities.Banner
+	err := row.Scan(&banner.ID, &banner.FeatureID, &banner.Content, &banner.IsActive, &banner.CreatedAt, &banner.UpdatedAt)
+	if err != nil {
+		br.log.Error("Error with database", errMsg.Err(err))
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, err
+		}
+		br.log.Error("Failed to find banner", errMsg.Err(err))
+		return nil, err
+	}
+	return &banner, nil
 }

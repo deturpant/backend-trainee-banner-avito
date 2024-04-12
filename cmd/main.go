@@ -70,7 +70,6 @@ func main() {
 	router.Post("/users", users.New(log, ur))
 	jwt := auth.NewJWTManager(cfg.Jwt.Secret, log)
 	router.Post("/login", users.LoginFunc(log, ur, jwt))
-
 	//secured route
 	router.With(func(next http.Handler) http.Handler {
 		return middlewares.TokenAuthMiddleware(jwt, next)
@@ -80,6 +79,9 @@ func main() {
 	router.With(func(next http.Handler) http.Handler {
 		return middlewares.TokenAuthAndRoleMiddleware(jwt, next)
 	}).Post("/banners", banners.New(log, br, btr))
+
+	router.Get("/user_banner", banners.NewGetBannerHandler(log, br))
+
 	log.Info("Starting server at", slog.String("addr", cfg.Server.Addr))
 	server := &http.Server{
 		Addr:         cfg.Server.Addr,

@@ -16,6 +16,7 @@ import (
 
 type Banners interface {
 	CreateBanner(ctx context.Context, banner *entities.Banner) error
+	FindBannerByFeatureTag(ctx context.Context, featureID, tagID int) (*entities.Banner, error)
 }
 type BannerTags interface {
 	CreateBannerTag(ctx context.Context, bannerTag *entities.BannerTag) error
@@ -69,6 +70,7 @@ func New(log *slog.Logger, bannerRepository Banners, bannerTagsRepository Banner
 		err = bannerRepository.CreateBanner(r.Context(), &banner)
 		if err != nil {
 			log.Error("Failed to create banner", errMsg.Err(err))
+			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("Failed to create banner"))
 			return
 		}
@@ -80,6 +82,7 @@ func New(log *slog.Logger, bannerRepository Banners, bannerTagsRepository Banner
 			}
 			err = bannerTagsRepository.CreateBannerTag(r.Context(), &bannerTag)
 			if err != nil {
+				render.Status(r, http.StatusBadRequest)
 				log.Error("Failed to create banner tag", errMsg.Err(err))
 				render.JSON(w, r, response.Error("Failed to create banner tag"))
 				return
