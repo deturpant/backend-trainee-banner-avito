@@ -118,3 +118,12 @@ func (br *BannerRepository) FindBannerByFeatureTag(ctx context.Context, featureI
 	}
 	return &banner, nil
 }
+
+func (br *BannerRepository) DeleteBannerByID(ctx context.Context, id int) error {
+	_, err := br.db.Exec(ctx, `DELETE FROM banners WHERE id = $1`, id)
+	if err != nil {
+		br.log.Error("Failed to delete banner by ID", errMsg.Err(err))
+		return err
+	}
+	return nil
+}
