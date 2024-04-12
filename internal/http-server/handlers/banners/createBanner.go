@@ -18,6 +18,7 @@ type Banners interface {
 	CreateBanner(ctx context.Context, banner *entities.Banner) error
 	FindBannerByFeatureTag(ctx context.Context, featureID, tagID int) (*entities.Banner, error)
 	DeleteBannerByID(ctx context.Context, id int) error
+	FindBannersByParameters(ctx context.Context, params RequestGetBanners) ([]entities.Banner, error)
 }
 type BannerTags interface {
 	CreateBannerTag(ctx context.Context, bannerTag *entities.BannerTag) error

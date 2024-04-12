@@ -82,6 +82,7 @@ func main() {
 
 	router.Get("/user_banner", banners.NewGetBannerHandler(log, br))
 	router.Delete("/banner/{id}", banners.NewDeleteBannerHandler(log, br))
+	router.Get("/banner", banners.NewGetBannersHandler(br, log))
 	log.Info("Starting server at", slog.String("addr", cfg.Server.Addr))
 	server := &http.Server{
 		Addr:         cfg.Server.Addr,

@@ -2,12 +2,14 @@ package repositories
 
 import (
 	"backend-trainee-banner-avito/internal/entities"
+	"backend-trainee-banner-avito/internal/http-server/handlers/banners"
 	"backend-trainee-banner-avito/internal/lib/logger/errMsg"
 	"context"
 	"errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
+	"strconv"
 )
 
 type BannerRepository struct {
@@ -126,4 +128,58 @@ func (br *BannerRepository) DeleteBannerByID(ctx context.Context, id int) error 
 		return err
 	}
 	return nil
+}
+
+func (br *BannerRepository) FindBannersByParameters(ctx context.Context, params banners.RequestGetBanners) ([]entities.Banner, error) {
+	query := "SELECT b.id, b.feature_id, b.content, b.is_active, b.created_at, b.updated_at, array_agg(bt.tag_id) AS tag_ids FROM banners b LEFT JOIN banner_tags bt ON b.id = bt.banner_id WHERE 1=1"
+	args := []interface{}{}
+
+	// Добавляем условия, если они указаны в параметрах запроса
+	if params.FeatureID != nil {
+		query += " AND b.feature_id = $" + strconv.Itoa(len(args)+1)
+		args = append(args, *params.FeatureID)
+	}
+
+	if params.TagID != nil {
+		query += " AND b.id IN (SELECT banner_id FROM banner_tags WHERE tag_id = $" + strconv.Itoa(len(args)+1) + ")"
+		args = append(args, *params.TagID)
+	}
+
+	query += " GROUP BY b.id"
+
+	if params.Limit != nil {
+		query += " LIMIT $" + strconv.Itoa(len(args)+1)
+		args = append(args, *params.Limit)
+	}
+
+	if params.Offset != nil {
+		query += " OFFSET $" + strconv.Itoa(len(args)+1)
+		args = append(args, *params.Offset)
+	}
+
+	rows, err := br.db.Query(ctx, query, args...)
+	if err != nil {
+		br.log.Error("Failed to query banners", errMsg.Err(err))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var banners []entities.Banner
+	for rows.Next() {
+		var banner entities.Banner
+		var tagIDs []int
+		if err := rows.Scan(&banner.ID, &banner.FeatureID, &banner.Content, &banner.IsActive, &banner.CreatedAt, &banner.UpdatedAt, &tagIDs); err != nil {
+			br.log.Error("Failed to scan banner row", errMsg.Err(err))
+			return nil, err
+		}
+		banner.TagIDs = tagIDs
+		banners = append(banners, banner)
+	}
+
+	if err := rows.Err(); err != nil {
+		br.log.Error("Error occurred while iterating banner rows", errMsg.Err(err))
+		return nil, err
+	}
+
+	return banners, nil
 }
