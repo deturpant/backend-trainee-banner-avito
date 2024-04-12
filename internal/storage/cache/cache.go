@@ -35,7 +35,7 @@ func GetBannerFromCache(featureID, tagID int) (*entities.Banner, bool) {
 		return nil, false
 	}
 
-	if time.Since(cached.UpdatedAt) > 10*time.Minute {
+	if time.Since(cached.UpdatedAt) > 5*time.Minute {
 		delete(cache.Banners, key)
 		return nil, false
 	}
