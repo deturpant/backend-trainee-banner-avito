@@ -48,12 +48,6 @@ func main() {
 	}
 	log.Info("Application started....", slog.String("env", cfg.Env))
 
-	/*ur := repositories.NewRepository(pg.Db, log)
-	errorr := ur.CreateUser(context.Background(), &entities.User{Role: "user", Password: "123123", Username: "pop"})
-	if err != nil {
-		log.Error("error adding user", errMsg.Err(errorr))
-	}*/
-
 	//router init
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
@@ -61,28 +55,38 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
+
 	fr := repositories.NewFeatureRepository(pg.Db, log)
-	router.Post("/features", features.New(log, fr))
 	tr := repositories.NewTagRepository(pg.Db, log)
 	ur := repositories.NewUserRepository(pg.Db, log)
-	router.Post("/tags", tags.New(log, tr))
+	jwt := auth.NewJWTManager(cfg.Jwt.Secret, log)
+	br := repositories.NewBannerRepository(pg.Db, log)
+	btr := repositories.NewBannerTagRepository(pg.Db, log)
 
 	router.Post("/users", users.New(log, ur))
-	jwt := auth.NewJWTManager(cfg.Jwt.Secret, log)
 	router.Post("/login", users.LoginFunc(log, ur, jwt))
-	//secured route
+
+	router.With(func(next http.Handler) http.Handler {
+		return middlewares.TokenAuthMiddleware(jwt, next)
+	}).Get("/user_banner", banners.NewGetBannerHandler(log, br))
 	router.With(func(next http.Handler) http.Handler {
 		return middlewares.TokenAuthMiddleware(jwt, next)
 	}).Post("/tags", tags.New(log, tr))
-	br := repositories.NewBannerRepository(pg.Db, log)
-	btr := repositories.NewBannerTagRepository(pg.Db, log)
+
 	router.With(func(next http.Handler) http.Handler {
 		return middlewares.TokenAuthAndRoleMiddleware(jwt, next)
 	}).Post("/banners", banners.New(log, br, btr))
+	router.With(func(next http.Handler) http.Handler { return middlewares.TokenAuthAndRoleMiddleware(jwt, next) }).Post("/features", features.New(log, fr))
+	router.With(func(next http.Handler) http.Handler {
+		return middlewares.TokenAuthAndRoleMiddleware(jwt, next)
+	}).Delete("/banner/{id}", banners.NewDeleteBannerHandler(log, br))
+	router.With(func(next http.Handler) http.Handler {
+		return middlewares.TokenAuthAndRoleMiddleware(jwt, next)
+	}).Get("/banner", banners.NewGetBannersHandler(br, log))
+	router.With(func(next http.Handler) http.Handler {
+		return middlewares.TokenAuthAndRoleMiddleware(jwt, next)
+	}).Patch("/banner/{id}", banners.NewUpdateBannerHandler(br, log))
 
-	router.Get("/user_banner", banners.NewGetBannerHandler(log, br))
-	router.Delete("/banner/{id}", banners.NewDeleteBannerHandler(log, br))
-	router.Get("/banner", banners.NewGetBannersHandler(br, log))
 	log.Info("Starting server at", slog.String("addr", cfg.Server.Addr))
 	server := &http.Server{
 		Addr:         cfg.Server.Addr,

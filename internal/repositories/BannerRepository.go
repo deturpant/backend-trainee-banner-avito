@@ -5,6 +5,7 @@ import (
 	"backend-trainee-banner-avito/internal/http-server/handlers/banners"
 	"backend-trainee-banner-avito/internal/lib/logger/errMsg"
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -33,22 +34,21 @@ func (br *BannerRepository) CreateBanner(ctx context.Context, banner *entities.B
 }
 
 func (br *BannerRepository) FindBannerById(ctx context.Context, id int) (entities.Banner, error) {
-	query, err := br.db.Query(ctx,
+	row := br.db.QueryRow(ctx,
 		`SELECT * FROM banners WHERE id = $1`, id)
+
+	var banner entities.Banner
+	err := row.Scan(&banner.ID, &banner.FeatureID, &banner.Content, &banner.IsActive, &banner.CreatedAt, &banner.UpdatedAt)
 	if err != nil {
-		br.log.Error("Banner not found", errMsg.Err(err))
-		return entities.Banner{}, err
-	}
-	defer query.Close()
-	rowArray := entities.Banner{}
-	for query.Next() {
-		err := query.Scan(&rowArray.ID, &rowArray.FeatureID, &rowArray.Content, &rowArray.IsActive, &rowArray.CreatedAt, &rowArray.UpdatedAt)
-		if err != nil {
-			br.log.Error("Banner not found", errMsg.Err(err))
+		if err == sql.ErrNoRows {
+			// Если баннер не найден, возвращаем ошибку
 			return entities.Banner{}, err
 		}
+		br.log.Error("Failed to scan banner row", errMsg.Err(err))
+		return entities.Banner{}, err
 	}
-	return rowArray, nil
+
+	return banner, nil
 }
 
 func (br *BannerRepository) FindBannersByFeatureID(ctx context.Context, feature_id int) ([]entities.Banner, error) {
@@ -134,7 +134,6 @@ func (br *BannerRepository) FindBannersByParameters(ctx context.Context, params 
 	query := "SELECT b.id, b.feature_id, b.content, b.is_active, b.created_at, b.updated_at, array_agg(bt.tag_id) AS tag_ids FROM banners b LEFT JOIN banner_tags bt ON b.id = bt.banner_id WHERE 1=1"
 	args := []interface{}{}
 
-	// Добавляем условия, если они указаны в параметрах запроса
 	if params.FeatureID != nil {
 		query += " AND b.feature_id = $" + strconv.Itoa(len(args)+1)
 		args = append(args, *params.FeatureID)
@@ -182,4 +181,42 @@ func (br *BannerRepository) FindBannersByParameters(ctx context.Context, params 
 	}
 
 	return banners, nil
+}
+
+func (br *BannerRepository) UpdateBanner(ctx context.Context, banner *entities.Banner) error {
+	tx, err := br.db.Begin(ctx)
+	if err != nil {
+		br.log.Error("Failed to begin transaction", errMsg.Err(err))
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `DELETE FROM banner_tags WHERE banner_id = $1`, banner.ID)
+	if err != nil {
+		br.log.Error("Failed to delete old tags for banner", errMsg.Err(err))
+		return err
+	}
+
+	for _, tagID := range banner.TagIDs {
+		_, err = tx.Exec(ctx, `INSERT INTO banner_tags (banner_id, tag_id) VALUES ($1, $2)`, banner.ID, tagID)
+		if err != nil {
+			br.log.Error("Failed to insert tag for banner", errMsg.Err(err))
+			return err
+		}
+	}
+
+	_, err = tx.Exec(ctx,
+		`UPDATE banners SET feature_id = $1, content = $2, is_active = $3, updated_at = $4 WHERE id = $5`,
+		banner.FeatureID, banner.Content, banner.IsActive, banner.UpdatedAt, banner.ID)
+	if err != nil {
+		br.log.Error("Failed to update banner", errMsg.Err(err))
+		return err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		br.log.Error("Failed to commit transaction", errMsg.Err(err))
+		return err
+	}
+
+	return nil
 }
