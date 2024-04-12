@@ -4,6 +4,7 @@ import (
 	"backend-trainee-banner-avito/internal/entities"
 	"backend-trainee-banner-avito/internal/lib/api/response"
 	"backend-trainee-banner-avito/internal/lib/logger/errMsg"
+	"backend-trainee-banner-avito/internal/storage/cache"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
@@ -61,16 +62,34 @@ func NewGetBannerHandler(log *slog.Logger, bannerRepo Banners) http.HandlerFunc 
 			render.JSON(w, r, response.ValidationError(validateErr))
 			return
 		}
-
-		banner, err := bannerRepo.FindBannerByFeatureTag(r.Context(), req.FeatureID, req.TagID)
-		if err != nil {
-			log.Error("Failed to find banner", errMsg.Err(err))
-			render.Status(r, http.StatusNotFound)
-			render.JSON(w, r, response.Error("Failed to find banner"))
-			return
+		if req.UseLastRevision {
+			banner, err := bannerRepo.FindBannerByFeatureTag(r.Context(), req.FeatureID, req.TagID)
+			if err != nil {
+				log.Error("Failed to find banner", errMsg.Err(err))
+				render.Status(r, http.StatusNotFound)
+				render.JSON(w, r, response.Error("Failed to find banner"))
+				return
+			}
+			cache.StoreBannerInCache(req.FeatureID, req.TagID, *banner)
+			responseGetOK(w, r, *banner)
+		} else {
+			banner, found := cache.GetBannerFromCache(req.FeatureID, req.TagID)
+			if found {
+				log.Info("Banner found in CACHE")
+				responseGetOK(w, r, *banner)
+			} else {
+				banner, err := bannerRepo.FindBannerByFeatureTag(r.Context(), req.FeatureID, req.TagID)
+				if err != nil {
+					log.Error("Failed to find banner", errMsg.Err(err))
+					render.Status(r, http.StatusNotFound)
+					render.JSON(w, r, response.Error("Failed to find banner"))
+					return
+				}
+				cache.StoreBannerInCache(req.FeatureID, req.TagID, *banner)
+				responseGetOK(w, r, *banner)
+			}
 		}
 
-		responseGetOK(w, r, *banner)
 	}
 }
 
