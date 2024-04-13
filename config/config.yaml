@@ -11,3 +11,4 @@ database:
   dbname: banner
 jwt:
   secret: FJKngdjkfgndfkgc534tlLKFJKLmfkdfjnk
+default_admin_pass: NJKfsjkdtoierf

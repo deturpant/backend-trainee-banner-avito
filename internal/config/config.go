@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	Env      string         `yaml:"env"`
-	Server   ServerConfig   `yaml:"http_server"`
-	Database DatabaseConfig `yaml:"database"`
-	Jwt      JwtConfig      `yaml:"jwt"`
+	Env              string         `yaml:"env"`
+	Server           ServerConfig   `yaml:"http_server"`
+	Database         DatabaseConfig `yaml:"database"`
+	Jwt              JwtConfig      `yaml:"jwt"`
+	DefaultAdminPass string         `yaml:"default_admin_pass"`
 }
 
 type ServerConfig struct {

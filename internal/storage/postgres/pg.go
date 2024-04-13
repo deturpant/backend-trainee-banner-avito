@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"backend-trainee-banner-avito/internal/config"
+	"backend-trainee-banner-avito/internal/lib/auth"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -9,8 +11,9 @@ import (
 )
 
 type Postgres struct {
-	Db  *pgxpool.Pool
-	log *slog.Logger
+	Db     *pgxpool.Pool
+	log    *slog.Logger
+	Config *config.Config
 }
 
 var (
@@ -18,7 +21,7 @@ var (
 	pgOnce     sync.Once
 )
 
-func NewPG(ctx context.Context, connString string, log *slog.Logger) (*Postgres, error) {
+func NewPG(ctx context.Context, connString string, log *slog.Logger, cfg *config.Config) (*Postgres, error) {
 	var err error
 	pgOnce.Do(func() {
 		db, err := pgxpool.New(ctx, connString)
@@ -27,8 +30,8 @@ func NewPG(ctx context.Context, connString string, log *slog.Logger) (*Postgres,
 			return
 		}
 
-		pgInstance = &Postgres{db, log}
-		if err := CreateTables(ctx, db, log); err != nil {
+		pgInstance = &Postgres{db, log, cfg}
+		if err := CreateTables(ctx, db, log, cfg); err != nil {
 			return
 		}
 	})
@@ -39,7 +42,7 @@ func NewPG(ctx context.Context, connString string, log *slog.Logger) (*Postgres,
 	return pgInstance, nil
 }
 
-func CreateTables(ctx context.Context, db *pgxpool.Pool, log *slog.Logger) error {
+func CreateTables(ctx context.Context, db *pgxpool.Pool, log *slog.Logger, cfg *config.Config) error {
 	_, err := db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS banners (
 			id SERIAL PRIMARY KEY,
@@ -98,7 +101,8 @@ func CreateTables(ctx context.Context, db *pgxpool.Pool, log *slog.Logger) error
 	if err != nil {
 		return fmt.Errorf("failed to create users table: %w", err)
 	}
-
+	hashPass, err := auth.HashPassword(cfg.DefaultAdminPass)
+	_, err = db.Exec(ctx, `INSERT INTO users (username, password, role) VALUES ($1,$2,$3)`, "admin", hashPass, "admin")
 	log.Info("Tables created (or updated)")
 	return nil
 }

@@ -120,6 +120,6 @@ func setupLogger(env string) *slog.Logger {
 func connectToPostgres(cfg *config.Config, log *slog.Logger) (*postgres.Postgres, error) {
 	connString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s",
 		cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password, cfg.Database.DBName)
-	pg, err := postgres.NewPG(context.Background(), connString, log)
+	pg, err := postgres.NewPG(context.Background(), connString, log, cfg)
 	return pg, err
 }
