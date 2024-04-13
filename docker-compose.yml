@@ -1,0 +1,19 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: banner
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+  app:
+    build: .
+    environment:
+      CONFIG_PATH: /app/config/config.yaml
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    command: ["./wait-for-it.sh", "db:5432", "--", "./app"]
