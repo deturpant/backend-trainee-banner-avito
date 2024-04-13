@@ -106,7 +106,7 @@ func (br *BannerRepository) FindBannerByFeatureTag(ctx context.Context, featureI
 	query := `SELECT b.id, b.feature_id, b.content, b.is_active, b.created_at, b.updated_at
 			  FROM banners b
 			  INNER JOIN banner_tags bt ON b.id = bt.banner_id
-			  WHERE b.feature_id = $1 AND bt.tag_id = $2`
+			  WHERE b.feature_id = $1 AND bt.tag_id = $2 AND b.is_active = true`
 	row := br.db.QueryRow(ctx, query, featureID, tagID)
 	var banner entities.Banner
 	err := row.Scan(&banner.ID, &banner.FeatureID, &banner.Content, &banner.IsActive, &banner.CreatedAt, &banner.UpdatedAt)
