@@ -15,6 +15,19 @@ type RequestGetBanners struct {
 	Offset    *int `json:"offset"`
 }
 
+// @Summary Получить баннеры с учетом заданных параметров
+// @Description Получает список баннеров с учетом переданных параметров запроса
+// @ID get-banners
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Токен администратора" format:"Bearer <admin_token>"
+// @Param feature_id query int false "Идентификатор особенности баннера"
+// @Param tag_id query int false "Идентификатор тега баннера"
+// @Param limit query int false "Ограничение на количество возвращаемых баннеров"
+// @Param offset query int false "Смещение для пагинации результатов"
+// @Success 200 {array} entities.Banner "Список баннеров"
+// @Failure 500 {object} banners.Response "Ошибка при получении баннеров"
+// @Router /banner [get]
 func NewGetBannersHandler(bannerRepo Banners, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := parseGetBannersRequest(r)

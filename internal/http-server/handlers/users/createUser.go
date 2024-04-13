@@ -29,6 +29,16 @@ type ResponseUser struct {
 	Role string `json:"role"`
 }
 
+// @Summary Создать нового пользователя
+// @Description Создает нового пользователя на основе переданных данных
+// @ID create-user
+// @Accept  json
+// @Produce  json
+// @Param request body RequestUser true "Данные для создания пользователя"
+// @Success 200 {object} ResponseUser "Созданный пользователь"
+// @Failure 400 {object} banners.Response "Неверные параметры запроса"
+// @Failure 500 {object} banners.Response "Ошибка при создании пользователя"
+// @Router /users [post]
 func New(log *slog.Logger, userRepository User) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const loggerOptions = "handlers.features.createUser.New"

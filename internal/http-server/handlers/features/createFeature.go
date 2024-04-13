@@ -24,6 +24,17 @@ type ResponseFeature struct {
 	Name string `json:"name"`
 }
 
+// @Summary Создать новую фияу
+// @Description Создает новую фичу на основе переданных данных
+// @ID create-feature
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Токен администратора" format:"Bearer <admin_token>"
+// @Param request body RequestFeature true "Данные для создания фичи"
+// @Success 200 {object} ResponseFeature "Созданная фича"
+// @Failure 400 {object} banners.Response "Неверные параметры запроса"
+// @Failure 500 {object} banners.Response "Ошибка при создании фича"
+// @Router /features [post]
 func New(log *slog.Logger, featureRepository Features) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const loggerOptions = "handlers.features.createFeature.New"

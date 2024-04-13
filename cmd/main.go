@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log/slog"
 	"net/http"
 	"os"
@@ -65,14 +66,16 @@ func main() {
 
 	router.Post("/users", users.New(log, ur))
 	router.Post("/login", users.LoginFunc(log, ur, jwt))
-
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8000/docs/swagger.json"), // URL to swagger.json
+	))
 	router.With(func(next http.Handler) http.Handler {
 		return middlewares.TokenAuthMiddleware(jwt, next)
 	}).Get("/user_banner", banners.NewGetBannerHandler(log, br))
-	router.With(func(next http.Handler) http.Handler {
-		return middlewares.TokenAuthMiddleware(jwt, next)
-	}).Post("/tags", tags.New(log, tr))
 
+	router.With(func(next http.Handler) http.Handler {
+		return middlewares.TokenAuthAndRoleMiddleware(jwt, next)
+	}).Post("/tags", tags.New(log, tr))
 	router.With(func(next http.Handler) http.Handler {
 		return middlewares.TokenAuthAndRoleMiddleware(jwt, next)
 	}).Post("/banners", banners.New(log, br, btr))

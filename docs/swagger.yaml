@@ -1,0 +1,486 @@
+definitions:
+  banners.Content:
+    properties:
+      name:
+        type: string
+      text:
+        type: string
+      url:
+        type: string
+    type: object
+  banners.RequestBanner:
+    properties:
+      content:
+        additionalProperties: true
+        type: object
+      feature_id:
+        type: integer
+      is_active:
+        type: boolean
+      tag_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - content
+    - feature_id
+    - is_active
+    - tag_ids
+    type: object
+  banners.RequestUpdateBanner:
+    properties:
+      content:
+        additionalProperties: true
+        type: object
+      feature_id:
+        type: integer
+      is_active:
+        type: boolean
+      tag_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - content
+    - feature_id
+    - is_active
+    - tag_ids
+    type: object
+  banners.Response:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+  banners.ResponseBanner:
+    properties:
+      banner_id:
+        type: integer
+      content:
+        additionalProperties: true
+        type: object
+      error:
+        type: string
+      feature_id:
+        type: integer
+      is_active:
+        type: boolean
+      status:
+        type: string
+      tag_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  entities.Banner:
+    properties:
+      banner_id:
+        type: integer
+      content:
+        additionalProperties: true
+        type: object
+      created_at:
+        type: string
+      feature_id:
+        type: integer
+      is_active:
+        type: boolean
+      tag_ids:
+        items:
+          type: integer
+        type: array
+      updated_at:
+        type: string
+    type: object
+  features.RequestFeature:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  features.ResponseFeature:
+    properties:
+      error:
+        type: string
+      feature_id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  tags.RequestTag:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  tags.ResponseTag:
+    properties:
+      error:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      tag_id:
+        type: integer
+    type: object
+  users.RequestUser:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - name
+    - password
+    type: object
+  users.ResponseAuthUser:
+    properties:
+      error:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      token:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  users.ResponseUser:
+    properties:
+      error:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /banner:
+    get:
+      consumes:
+      - application/json
+      description: Получает список баннеров с учетом переданных параметров запроса
+      operationId: get-banners
+      parameters:
+      - description: Токен администратора
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Идентификатор особенности баннера
+        in: query
+        name: feature_id
+        type: integer
+      - description: Идентификатор тега баннера
+        in: query
+        name: tag_id
+        type: integer
+      - description: Ограничение на количество возвращаемых баннеров
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение для пагинации результатов
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список баннеров
+          schema:
+            items:
+              $ref: '#/definitions/entities.Banner'
+            type: array
+        "500":
+          description: Ошибка при получении баннеров
+          schema:
+            $ref: '#/definitions/banners.Response'
+      summary: Получить баннеры с учетом заданных параметров
+  /banner/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет баннер с указанным идентификатором
+      operationId: delete-banner
+      parameters:
+      - description: Токен администратора
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Идентификатор баннера
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Баннер успешно удален
+        "400":
+          description: Неверный идентификатор баннера
+          schema:
+            $ref: '#/definitions/banners.Response'
+        "500":
+          description: Ошибка при удалении баннера
+          schema:
+            $ref: '#/definitions/banners.Response'
+      summary: Удалить баннер по его идентификатору
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет информацию о баннере с указанным идентификатором
+      operationId: update-banner
+      parameters:
+      - description: Токен администратора
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Идентификатор баннера
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления баннера
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/banners.RequestUpdateBanner'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновленный баннер
+          schema:
+            $ref: '#/definitions/banners.ResponseBanner'
+        "400":
+          description: Неверный идентификатор баннера или неверные данные запроса
+          schema:
+            $ref: '#/definitions/banners.Response'
+        "404":
+          description: Баннер не найден
+          schema:
+            $ref: '#/definitions/banners.Response'
+        "500":
+          description: Ошибка при обновлении баннера
+          schema:
+            $ref: '#/definitions/banners.Response'
+      summary: Обновить информацию о баннере
+  /banners:
+    post:
+      consumes:
+      - application/json
+      description: Создает новый баннер на основе переданных данных
+      operationId: create-banner
+      parameters:
+      - description: Токен администратора
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Данные для создания баннера
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/banners.RequestBanner'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Созданный баннер
+          schema:
+            $ref: '#/definitions/banners.ResponseBanner'
+        "400":
+          description: Ошибка при создании баннера
+          schema:
+            $ref: '#/definitions/banners.Response'
+      summary: Создать новый баннер
+  /features:
+    post:
+      consumes:
+      - application/json
+      description: Создает новую фичу на основе переданных данных
+      operationId: create-feature
+      parameters:
+      - description: Токен администратора
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Данные для создания фичи
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/features.RequestFeature'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Созданная фича
+          schema:
+            $ref: '#/definitions/features.ResponseFeature'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/banners.Response'
+        "500":
+          description: Ошибка при создании фича
+          schema:
+            $ref: '#/definitions/banners.Response'
+      summary: Создать новую фияу
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентифицирует пользователя и выдает токен доступа
+      operationId: login
+      parameters:
+      - description: Данные для входа в систему
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.RequestUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Аутентифицированный пользователь с токеном доступа
+          schema:
+            $ref: '#/definitions/users.ResponseAuthUser'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/banners.Response'
+        "401":
+          description: Неверные учетные данные
+          schema:
+            $ref: '#/definitions/banners.Response'
+      summary: Войти в систему
+  /tags:
+    post:
+      consumes:
+      - application/json
+      description: Создает новый тег на основе переданных данных
+      operationId: create-tag
+      parameters:
+      - description: Токен администратора
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Данные для создания тега
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/tags.RequestTag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Созданный тег
+          schema:
+            $ref: '#/definitions/tags.ResponseTag'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/banners.Response'
+        "500":
+          description: Ошибка при создании тега
+          schema:
+            $ref: '#/definitions/banners.Response'
+      summary: Создать новый тег
+  /user_banner:
+    get:
+      consumes:
+      - application/json
+      description: Получает баннер с учетом переданных параметров запроса
+      operationId: get-banner
+      parameters:
+      - description: Токен пользователя
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Идентификатор особенности баннера
+        in: query
+        name: feature_id
+        required: true
+        type: integer
+      - description: Идентификатор тега баннера
+        in: query
+        name: tag_id
+        required: true
+        type: integer
+      - description: Использовать последнюю ревизию
+        in: query
+        name: use_last_revision
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Содержимое баннера
+          schema:
+            $ref: '#/definitions/banners.Content'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/banners.Response'
+        "404":
+          description: Баннер не найден
+          schema:
+            $ref: '#/definitions/banners.Response'
+      summary: Получить баннер с указанными параметрами
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Создает нового пользователя на основе переданных данных
+      operationId: create-user
+      parameters:
+      - description: Данные для создания пользователя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.RequestUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Созданный пользователь
+          schema:
+            $ref: '#/definitions/users.ResponseUser'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/banners.Response'
+        "500":
+          description: Ошибка при создании пользователя
+          schema:
+            $ref: '#/definitions/banners.Response'
+      summary: Создать нового пользователя
+swagger: "2.0"

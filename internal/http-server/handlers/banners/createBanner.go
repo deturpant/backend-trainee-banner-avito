@@ -40,7 +40,21 @@ type ResponseBanner struct {
 	Content   map[string]interface{} `json:"content"`
 	IsActive  bool                   `json:"is_active"`
 }
+type Response struct {
+	Status string `json:"status"`
+	Error  string `json:"error,omitempty"`
+}
 
+// @Summary Создать новый баннер
+// @Description Создает новый баннер на основе переданных данных
+// @ID create-banner
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Токен администратора" format:"Bearer <admin_token>"
+// @Param request body RequestBanner true "Данные для создания баннера"
+// @Success 200 {object} ResponseBanner "Созданный баннер"
+// @Failure 400 {object} Response "Ошибка при создании баннера"
+// @Router /banners [post]
 func New(log *slog.Logger, bannerRepository Banners, bannerTagsRepository BannerTags) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const loggerOptions = "handlers.banners.createBanner.New"

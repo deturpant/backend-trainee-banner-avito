@@ -18,7 +18,25 @@ type RequestGetBanner struct {
 	TagID           int  `json:"tag_id" validate:"required"`
 	UseLastRevision bool `json:"use_last_revision"`
 }
+type Content struct {
+	Text string `json:"text"`
+	Url  string `json:"url"`
+	Name string `json:"name"`
+}
 
+// @Summary Получить баннер с указанными параметрами
+// @Description Получает баннер с учетом переданных параметров запроса
+// @ID get-banner
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Токен пользователя" format:"Bearer <user_token>"
+// @Param feature_id query int true "Идентификатор особенности баннера"
+// @Param tag_id query int true "Идентификатор тега баннера"
+// @Param use_last_revision query bool false "Использовать последнюю ревизию"
+// @Success 200 {object} Content "Содержимое баннера"
+// @Failure 400 {object} banners.Response "Неверные параметры запроса"
+// @Failure 404 {object} banners.Response "Баннер не найден"
+// @Router /user_banner [get]
 func NewGetBannerHandler(log *slog.Logger, bannerRepo Banners) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const loggerOptions = "handlers.banners.userBanner.New"

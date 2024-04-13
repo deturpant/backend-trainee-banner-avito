@@ -20,6 +20,19 @@ type RequestUpdateBanner struct {
 	IsActive  bool                   `json:"is_active" validate:"required"`
 }
 
+// @Summary Обновить информацию о баннере
+// @Description Обновляет информацию о баннере с указанным идентификатором
+// @ID update-banner
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Токен администратора" format:"Bearer <admin_token>"
+// @Param id path int true "Идентификатор баннера"
+// @Param request body RequestUpdateBanner true "Данные для обновления баннера"
+// @Success 200 {object} ResponseBanner "Обновленный баннер"
+// @Failure 400 {object} banners.Response "Неверный идентификатор баннера или неверные данные запроса"
+// @Failure 404 {object} banners.Response "Баннер не найден"
+// @Failure 500 {object} banners.Response "Ошибка при обновлении баннера"
+// @Router /banner/{id} [patch]
 func NewUpdateBannerHandler(bannerRepo Banners, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bannerID, err := strconv.Atoi(chi.URLParam(r, "id"))

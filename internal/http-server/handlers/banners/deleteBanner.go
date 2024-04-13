@@ -11,6 +11,17 @@ import (
 	"strconv"
 )
 
+// @Summary Удалить баннер по его идентификатору
+// @Description Удаляет баннер с указанным идентификатором
+// @ID delete-banner
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Токен администратора" format:"Bearer <admin_token>"
+// @Param id path int true "Идентификатор баннера"
+// @Success 204 "Баннер успешно удален"
+// @Failure 400 {object} banners.Response "Неверный идентификатор баннера"
+// @Failure 500 {object} banners.Response "Ошибка при удалении баннера"
+// @Router /banner/{id} [delete]
 func NewDeleteBannerHandler(log *slog.Logger, bannerRepo Banners) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const loggerOptions = "handlers.banners.deleteBanner.New"

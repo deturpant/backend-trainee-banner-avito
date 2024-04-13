@@ -25,6 +25,17 @@ type Tag interface {
 	CreateTag(ctx context.Context, tag *entities.Tag) error
 }
 
+// @Summary Создать новый тег
+// @Description Создает новый тег на основе переданных данных
+// @ID create-tag
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Токен администратора" format:"Bearer <admin_token>"
+// @Param request body RequestTag true "Данные для создания тега"
+// @Success 200 {object} ResponseTag "Созданный тег"
+// @Failure 400 {object} banners.Response "Неверные параметры запроса"
+// @Failure 500 {object} banners.Response "Ошибка при создании тега"
+// @Router /tags [post]
 func New(log *slog.Logger, tagRepository Tag) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const loggerOptions = "handlers.features.createTag.New"

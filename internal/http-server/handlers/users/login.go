@@ -20,6 +20,16 @@ type ResponseAuthUser struct {
 	Token string `json:"token"`
 }
 
+// @Summary Войти в систему
+// @Description Аутентифицирует пользователя и выдает токен доступа
+// @ID login
+// @Accept  json
+// @Produce  json
+// @Param request body RequestUser true "Данные для входа в систему"
+// @Success 200 {object} ResponseAuthUser "Аутентифицированный пользователь с токеном доступа"
+// @Failure 400 {object} banners.Response "Неверные параметры запроса"
+// @Failure 401 {object} banners.Response "Неверные учетные данные"
+// @Router /login [post]
 func LoginFunc(log *slog.Logger, userRepository User, jwt *auth.JWTManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const loggerOptions = "handlers.features.createUser.New"
